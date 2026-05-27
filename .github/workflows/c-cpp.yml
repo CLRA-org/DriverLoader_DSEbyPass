@@ -13,7 +13,31 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: make
-      run: make
-
+    
+    - name: Install MinGW
+      run: |
+        choco install mingw -y
+        echo "C:\tools\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    
+    - name: Check required files
+      run: |
+        echo "Checking files..."
+        dir
+        if (Test-Path "RTCore64.sys") { echo "RTCore64.sys found" } else { echo "RTCore64.sys missing" }
+        if (Test-Path "resource.rc") { echo "resource.rc found" } else { echo "resource.rc missing" }
+    
+    - name: Build
+      run: mingw32-make -f Makefile
+    
+    - name: List build artifacts
+      run: |
+        echo "Build artifacts:"
+        dir *.exe
+        if (Test-Path "dvr3a.exe") { echo "Build successful!" } else { echo "Build failed!" }
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dvr3a-windows
+        path: dvr3a.exe
+        if-no-files-found: error
