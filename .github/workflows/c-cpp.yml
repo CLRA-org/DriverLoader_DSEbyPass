@@ -19,6 +19,9 @@ jobs:
         choco install mingw -y
         echo "C:\tools\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
     
+    - name: Install UPX
+      run: choco install upx -y
+    
     - name: Check required files
       run: |
         echo "Checking files..."
@@ -28,6 +31,15 @@ jobs:
     
     - name: Build
       run: mingw32-make -f Makefile
+    
+    - name: Compress with UPX
+      run: |
+        if (Test-Path "dvr3a.exe") {
+          upx --best --lzma dvr3a.exe
+        } else {
+          Write-Error "dvr3a.exe not found, cannot compress"
+          exit 1
+        }
     
     - name: List build artifacts
       run: |
