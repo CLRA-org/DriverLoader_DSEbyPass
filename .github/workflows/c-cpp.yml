@@ -32,17 +32,8 @@ jobs:
         if (Test-Path "RTCore64.sys") { echo "RTCore64.sys found" } else { echo "RTCore64.sys missing" }
         if (Test-Path "resource.rc") { echo "resource.rc found" } else { echo "resource.rc missing" }
 
-    - name: Build
+    - name: Build (includes UPX compression)
       run: mingw32-make -f Makefile
-
-    - name: Compress with UPX
-      run: |
-        if (Test-Path "dvr3a.exe") {
-          upx --best --lzma dvr3a.exe
-        } else {
-          Write-Error "dvr3a.exe not found, cannot compress"
-          exit 1
-        }
 
     - name: Get short SHA and date
       id: vars

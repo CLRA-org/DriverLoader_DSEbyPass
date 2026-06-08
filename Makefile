@@ -1,5 +1,5 @@
 # Makefile for DSE bypass tool (embed RTCore64.sys via windres)
-# Ê¹ÓÃ·½·¨: mingw32-make -f Makefile
+# Ê¹ï¿½Ã·ï¿½ï¿½ï¿½: mingw32-make -f Makefile
 
 CXX = g++
 CXXFLAGS = -static -mwindows -O2
@@ -8,20 +8,24 @@ RESOURCE_OBJ = resource.o
 TARGET = dvr3a.exe
 SRC = dvr3a.cpp
 
-# Ä¬ÈÏÄ¿±ê
-all: $(TARGET)
+# Ä¬ï¿½ï¿½Ä¿ï¿½ê£¨ï¿½ï¿½ï¿½ UPX Ñ¹ï¿½ï¿½ï¿½ï¿½
+all: $(TARGET) upx
 
-# ±àÒë×ÊÔ´ÎÄ¼þ£¨ÐèÒª resource.rc ºÍ RTCore64.sys ´æÔÚ£©
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Òª resource.rc ï¿½ï¿½ RTCore64.sys ï¿½ï¿½ï¿½Ú£ï¿½
 $(RESOURCE_OBJ): resource.rc RTCore64.sys
 	windres resource.rc -o $@
 
-# Á´½Ó×îÖÕ¿ÉÖ´ÐÐÎÄ¼þ
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¿ï¿½Ö´ï¿½ï¿½ï¿½Ä¼ï¿½
 $(TARGET): $(SRC) $(RESOURCE_OBJ)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-# ÇåÀíÁÙÊ±ÎÄ¼þºÍÄ¿±êÎÄ¼þ
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ä¼ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½Ä¼ï¿½
 clean:
 	rm -f $(RESOURCE_OBJ) $(TARGET)
 
-# ÉùÃ÷Î±Ä¿±ê
-.PHONY: all clean
+# UPX Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ UPX installedÃ¯Â¿Â½
+upx: $(TARGET)
+	command -v upx >/dev/null 2>&1 && upx --best --lzma $< || echo "UPX not found, skipping compression"
+
+# ï¿½ï¿½ï¿½ï¿½Î±Ä¿ï¿½ï¿½
+.PHONY: all clean upx
