@@ -13,25 +13,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+      with:
+        fetch-depth: 0                     # 确保获取所有标签和完整历史
+
     - name: Install MinGW
       run: |
         choco install mingw -y
         echo "C:\tools\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-    
+
     - name: Install UPX
       run: choco install upx -y
-    
+
     - name: Check required files
       run: |
         echo "Checking files..."
         dir
         if (Test-Path "RTCore64.sys") { echo "RTCore64.sys found" } else { echo "RTCore64.sys missing" }
         if (Test-Path "resource.rc") { echo "resource.rc found" } else { echo "resource.rc missing" }
-    
+
     - name: Build
       run: mingw32-make -f Makefile
-    
+
     - name: Compress with UPX
       run: |
         if (Test-Path "dvr3a.exe") {
@@ -40,14 +42,36 @@ jobs:
           Write-Error "dvr3a.exe not found, cannot compress"
           exit 1
         }
-    
+
+    - name: Get short SHA and date
+      id: vars
+      run: |
+        $shortSha = git rev-parse --short HEAD
+        $date = Get-Date -Format "yyyy-MM-dd HH-mm-ss"
+        echo "short_sha=$shortSha" >> $env:GITHUB_OUTPUT
+        echo "date=$date" >> $env:GITHUB_OUTPUT
+
+    - name: Create or update Release
+      if: github.event_name == 'push'    # 只在 push 到 main 时创建/更新 release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'nightly' }}
+        name: ${{ github.ref_type == 'tag' && format('{0}+{1}', github.ref_name, steps.vars.outputs.short_sha) || format('Nightly Build {0}+{1}', steps.vars.outputs.date, steps.vars.outputs.short_sha) }}
+        body: ${{ github.ref_type == 'tag' && format('Release for tag {0}', github.ref_name) || 'Latest development build from main branch.' }}
+        files: dvr3a.exe
+        prerelease: ${{ github.ref_type != 'tag' }}
+        allowUpdates: true
+        draft: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: List build artifacts
       run: |
         echo "Build artifacts:"
         dir *.exe
         if (Test-Path "dvr3a.exe") { echo "Build successful!" } else { echo "Build failed!" }
-    
-    - name: Upload artifact
+
+    - name: Upload artifact (optional)
       uses: actions/upload-artifact@v4
       with:
         name: dvr3a-windows
