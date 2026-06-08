@@ -8,13 +8,14 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
+    permissions:
+      contents: write          # 授予创建 Release 的权限
 
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0                     # 确保获取所有标签和完整历史
+        fetch-depth: 0
 
     - name: Install MinGW
       run: |
@@ -52,7 +53,7 @@ jobs:
         echo "date=$date" >> $env:GITHUB_OUTPUT
 
     - name: Create or update Release
-      if: github.event_name == 'push'    # 只在 push 到 main 时创建/更新 release
+      if: github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'nightly' }}
@@ -60,8 +61,7 @@ jobs:
         body: ${{ github.ref_type == 'tag' && format('Release for tag {0}', github.ref_name) || 'Latest development build from main branch.' }}
         files: dvr3a.exe
         prerelease: ${{ github.ref_type != 'tag' }}
-        allowUpdates: true
-        draft: false
+        overwrite_files: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
